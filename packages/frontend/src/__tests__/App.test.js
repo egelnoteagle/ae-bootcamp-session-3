@@ -12,8 +12,8 @@ const server = setupServer(
     return res(
       ctx.status(200),
       ctx.json([
-        { id: 1, title: 'Test Task 1', description: 'Desc 1', due_date: '2025-09-30', completed: 0 },
-        { id: 2, title: 'Test Task 2', description: 'Desc 2', due_date: '2025-10-01', completed: 1 },
+        { id: 1, title: 'Test Task 1', description: 'Desc 1', due_date: '2025-09-30', completed: 0, priority: 'P1' },
+        { id: 2, title: 'Test Task 2', description: 'Desc 2', due_date: '2025-10-01', completed: 1, priority: 'P3' },
       ])
     );
   }),
@@ -35,6 +35,7 @@ const server = setupServer(
         description: req.body.description || '',
         due_date: req.body.due_date || null,
         completed: 0,
+        priority: req.body.priority || 'P3',
       })
     );
   }),
@@ -88,8 +89,8 @@ describe('TODO App', () => {
 
   test('adds a new task', async () => {
     let tasks = [
-      { id: 1, title: 'Test Task 1', description: 'Desc 1', due_date: '2025-09-30', completed: 0 },
-      { id: 2, title: 'Test Task 2', description: 'Desc 2', due_date: '2025-10-01', completed: 1 },
+      { id: 1, title: 'Test Task 1', description: 'Desc 1', due_date: '2025-09-30', completed: 0, priority: 'P1' },
+      { id: 2, title: 'Test Task 2', description: 'Desc 2', due_date: '2025-10-01', completed: 1, priority: 'P3' },
     ];
     server.use(
       rest.get('/api/tasks', (req, res, ctx) => {
@@ -103,6 +104,7 @@ describe('TODO App', () => {
           description: description || '',
           due_date: req.body.due_date || null,
           completed: 0,
+          priority: req.body.priority || 'P3',
         };
         tasks = [...tasks, newTask];
         return res(ctx.status(201), ctx.json(newTask));
@@ -120,6 +122,73 @@ describe('TODO App', () => {
     await user.click(screen.getByTestId('submit-task'));
     await waitFor(() => {
       expect(screen.getByText(/New Test Task/i)).toBeInTheDocument();
+    });
+  });
+
+  test('defaults priority to P3 when creating a task without selecting one', async () => {
+    let tasks = [];
+    let lastCreatedTask = null;
+    server.use(
+      rest.get('/api/tasks', (req, res, ctx) => {
+        return res(ctx.status(200), ctx.json(tasks));
+      }),
+      rest.post('/api/tasks', (req, res, ctx) => {
+        const { title, description } = req.body;
+        const newTask = {
+          id: 3,
+          title,
+          description: description || '',
+          due_date: req.body.due_date || null,
+          completed: 0,
+          priority: req.body.priority || 'P3',
+        };
+        tasks = [...tasks, newTask];
+        lastCreatedTask = newTask;
+        return res(ctx.status(201), ctx.json(newTask));
+      })
+    );
+    const user = userEvent.setup();
+    await act(async () => {
+      render(<App />);
+    });
+    await user.type(screen.getByTestId('title-input'), 'Default Priority Task');
+    await user.click(screen.getByTestId('submit-task'));
+    await waitFor(() => {
+      expect(lastCreatedTask).not.toBeNull();
+      expect(lastCreatedTask.priority).toBe('P3');
+    });
+  });
+
+  test('creates a task with a selected P1 priority', async () => {
+    let lastCreatedTask = null;
+    server.use(
+      rest.get('/api/tasks', (req, res, ctx) => {
+        return res(ctx.status(200), ctx.json([]));
+      }),
+      rest.post('/api/tasks', (req, res, ctx) => {
+        const newTask = {
+          id: 4,
+          title: req.body.title,
+          description: req.body.description || '',
+          due_date: req.body.due_date || null,
+          completed: 0,
+          priority: req.body.priority || 'P3',
+        };
+        lastCreatedTask = newTask;
+        return res(ctx.status(201), ctx.json(newTask));
+      })
+    );
+    const user = userEvent.setup();
+    await act(async () => {
+      render(<App />);
+    });
+    await user.type(screen.getByTestId('title-input'), 'Urgent Task');
+    await user.click(screen.getByLabelText('Priority'));
+    await user.click(await screen.findByRole('option', { name: 'P1' }));
+    await user.click(screen.getByTestId('submit-task'));
+    await waitFor(() => {
+      expect(lastCreatedTask).not.toBeNull();
+      expect(lastCreatedTask.priority).toBe('P1');
     });
   });
 

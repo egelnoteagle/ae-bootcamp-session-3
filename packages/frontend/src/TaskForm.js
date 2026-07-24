@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Paper, Typography, Box } from '@mui/material';
+import { TextField, Button, Paper, Typography, Box, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
+
+const PRIORITIES = ['P1', 'P2', 'P3'];
+const DEFAULT_PRIORITY = 'P3';
 
 function TaskForm({ onSave, initialTask }) {
   const [title, setTitle] = useState(initialTask?.title || '');
   const [description, setDescription] = useState(initialTask?.description || '');
   const [dueDate, setDueDate] = useState(initialTask?.due_date || '');
+  const [priority, setPriority] = useState(initialTask?.priority || DEFAULT_PRIORITY);
   const [error, setError] = useState(null);
 
   // Helper to normalize date string to YYYY-MM-DD format
@@ -30,10 +34,12 @@ function TaskForm({ onSave, initialTask }) {
       setTitle(initialTask.title || '');
       setDescription(initialTask.description || '');
       setDueDate(normalizeDateString(initialTask.due_date));
+      setPriority(initialTask.priority || DEFAULT_PRIORITY);
     } else {
       setTitle('');
       setDescription('');
       setDueDate('');
+      setPriority(DEFAULT_PRIORITY);
     }
   }, [initialTask]);
 
@@ -44,10 +50,11 @@ function TaskForm({ onSave, initialTask }) {
       return;
     }
     setError(null);
-    await onSave({ title, description, due_date: dueDate });
+    await onSave({ title, description, due_date: dueDate, priority });
     setTitle('');
     setDescription('');
     setDueDate('');
+    setPriority(DEFAULT_PRIORITY);
   };
 
   return (
@@ -143,6 +150,33 @@ function TaskForm({ onSave, initialTask }) {
             }
           }}
         />
+        <FormControl fullWidth size="small">
+          <InputLabel id="task-priority-label">Priority</InputLabel>
+          <Select
+            labelId="task-priority-label"
+            id="task-priority"
+            label="Priority"
+            value={priority}
+            onChange={e => setPriority(e.target.value)}
+            inputProps={{ 'data-testid': 'priority-input' }}
+            sx={{
+              borderRadius: 2,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(0, 0, 0, 0.23)',
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#1976d2',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#1976d2',
+              }
+            }}
+          >
+            {PRIORITIES.map(value => (
+              <MenuItem key={value} value={value}>{value}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         {error && <Typography color="error" sx={{ fontWeight: 500, fontSize: '0.875rem' }}>{error}</Typography>}
         <Box display="flex" gap={2}>
           <Button 
