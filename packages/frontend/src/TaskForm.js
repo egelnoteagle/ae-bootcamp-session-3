@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TextField, Button, Paper, Typography, Box, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SaveIcon from '@mui/icons-material/Save';
+import './App.css';
 
 const PRIORITIES = ['P1', 'P2', 'P3'];
 const DEFAULT_PRIORITY = 'P3';
@@ -173,7 +174,13 @@ function TaskForm({ onSave, initialTask }) {
             }}
           >
             {PRIORITIES.map(value => (
-              <MenuItem key={value} value={value}>{value}</MenuItem>
+              <MenuItem
+                key={value}
+                value={value}
+                className={value === priority ? 'priority-option priority-option--selected' : 'priority-option'}
+              >
+                {value}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
