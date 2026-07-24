@@ -1,0 +1,12 @@
+flowchart LR
+    user["Task user"]
+
+    subgraph system["TODO application monorepo"]
+        frontend["React frontend<br/>packages/frontend"]
+        api["Express API<br/>packages/backend"]
+        store[("In-memory SQLite<br/>better-sqlite3")]
+    end
+
+    user -->|"Uses in a browser"| frontend
+    frontend -->|"HTTP JSON via /api/tasks"| api
+    api -->|"SQL reads and writes"| store
